@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>波的传播过程演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        /* Office Equation Style */
+        .office-math {
+            font-family: 'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+            font-size: 1.15rem;
+            text-align: center;
+            background: #fff;
+            padding: 0.75rem 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+        }
+        .office-math i {
+            font-style: italic;
+        }
+        .office-math .func {
+            font-style: normal;
+            margin: 0 0.15rem;
+        }
+        .office-math .frac {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 0.2rem;
+            font-size: 0.85em;
+            line-height: 1.1;
+        }
+        .office-math .frac > span:first-child {
+            border-bottom: 1px solid #000;
+            padding: 0 0.2rem;
+            width: 100%;
+            text-align: center;
+        }
+        .office-math .frac > span:last-child {
+            padding: 0 0.2rem;
+        }
+        .office-math .bracket {
+            font-size: 1.25em;
+            font-weight: 300;
+            margin: 0 0.1rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm z-10 px-6 py-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">波的传播过程 (横波演示)</h1>
+            <p class="text-sm text-gray-500 mt-1">核心概念：波向前传播的是<span class="font-bold text-blue-600">形态和能量</span>，而介质中的质点仅在平衡位置<span class="font-bold text-red-500">上下振动</span>。</p>
+        </div>
+        <button id="playPauseBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition-colors flex items-center">
+            <svg id="playIcon" class="w-5 h-5 mr-2 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+            <svg id="pauseIcon" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+            <span id="btnText">暂停动画</span>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        
+        <!-- Canvas Area -->
+        <div class="flex-1 relative bg-white m-4 rounded-xl shadow-inner border border-gray-200 overflow-hidden" id="canvasContainer">
+            <canvas id="waveCanvas" class="block w-full h-full"></canvas>
+            
+            <!-- Floating Math Equation Panel (Right) -->
+            <div class="absolute top-4 right-4 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-blue-200 shadow-lg text-sm pointer-events-none w-80 lg:w-96 z-20 transition-all hidden sm:block">
+                <h4 class="font-bold text-gray-800 mb-2 border-b border-blue-100 pb-2 flex justify-between items-center">
+                    <span>运动方程与相位关系</span>
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </h4>
+                <div class="space-y-3 font-serif text-gray-700">
+                    <div>
+                        <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 mr-1"></span>
+                        <span class="font-bold">原点 O (x=0) 的振动方程:</span>
+                        <div class="office-math mt-1">
+                            <i>y</i><sub><i>O</i></sub> = <i>A</i><span class="func">cos</span>(<i>ωt</i> + <i>φ</i>)
+                        </div>
+                    </div>
+                    <div>
+                        <span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                        <span class="font-bold">质点 P (位置 x) 的波动方程:</span>
+                        <div class="office-math mt-1">
+                            <i>y</i> = <i>A</i><span class="func">cos</span><span class="bracket">[</span><i>ω</i><span class="bracket">(</span><i>t</i> − <span class="frac"><span><i>x</i></span><span><i>u</i></span></span><span class="bracket">)</span> + <i>φ</i><span class="bracket">]</span>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
+                        <p class="font-bold text-blue-800 text-xs mb-1">💡 物理意义解析：</p>
+                        <p class="text-xs leading-relaxed text-blue-900">
+                            波速 <span class="font-mono bg-white px-1 rounded">u = λ·f</span> = <span id="val_u" class="font-bold text-blue-700"></span> m/s<br>
+                            波传到 P 点耗时 <span class="font-mono bg-white px-1 rounded">Δt = x/u</span> = <span id="val_dt" class="font-bold text-blue-700"></span> s<br>
+                            P点的运动，本质是O点运动的<strong>延时重复</strong>：<br>
+                            <span class="block text-center font-bold mt-2 bg-white py-1 rounded text-blue-700 border border-blue-200">y<sub>P</sub>(t) = y<sub>O</sub>(t - Δt)</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <aside class="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 p-6 overflow-y-auto z-10 flex flex-col gap-6 shadow-[-4px_0_15px_rgba(0,0,0,0.03)]">
+            
+            <!-- 图例 (Moved from Canvas) -->
+            <div>
+                <h3 class="text-lg font-semibold border-b pb-2">图例</h3>
+                <div class="space-y-2 mt-3 text-sm text-gray-700">
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span> 普通质点
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span> 原点质点 O (x=0)
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> 目标质点 P (距离 x)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggles -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-semibold border-b pb-2">显示设置</h3>
+                
+                <label class="flex items-center cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="showLine" class="sr-only" checked>
+                        <div class="block bg-gray-200 w-10 h-6 rounded-full transition-colors duration-300"></div>
+                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform translate-x-4"></div>
+                    </div>
+                    <div class="ml-3 text-gray-700 font-medium">显示波形包络线</div>
+                </label>
+
+                <label class="flex items-center cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="showTrace" class="sr-only" checked>
+                        <div class="block bg-gray-200 w-10 h-6 rounded-full transition-colors duration-300"></div>
+                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform translate-x-4"></div>
+                    </div>
+                    <div class="ml-3 text-gray-700 font-medium">显示红色质点辅助线</div>
+                </label>
+            </div>
+
+            <!-- Sliders -->
+            <div class="space-y-6 mt-2">
+                <h3 class="text-lg font-semibold border-b pb-2">物理参数调节</h3>
+                
+                <!-- Amplitude -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-sm font-medium text-gray-700">振幅 (A)</label>
+                        <span id="ampValue" class="text-sm text-blue-600 font-mono font-bold">0.80 m</span>
+                    </div>
+                    <input type="range" id="amplitude" min="0" max="120" value="80">
+                    <p class="text-xs text-gray-400 mt-1">影响质点上下振动的最大距离。</p>
+                </div>
+
+                <!-- Wavelength -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-sm font-medium text-gray-700">波长 (λ)</label>
+                        <span id="waveValue" class="text-sm text-blue-600 font-mono font-bold">3.00 m</span>
+                    </div>
+                    <input type="range" id="wavelength" min="100" max="800" value="300">
+                    <p class="text-xs text-gray-400 mt-1">两个相邻波峰之间的距离。</p>
+                </div>
+
+                <!-- Frequency -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-sm font-medium text-gray-700">频率 (f)</label>
+                        <span id="freqValue" class="text-sm text-blue-600 font-mono font-bold">0.5 Hz</span>
+                    </div>
+                    <input type="range" id="frequency" min="0.1" max="2" step="0.1" value="0.5">
+                    <p class="text-xs text-gray-400 mt-1">质点每秒振动的次数。</p>
+                </div>
+
+                <!-- Initial Phase (Phi) -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-sm font-medium text-gray-700">初相 (φ)</label>
+                        <span id="phiValue" class="text-sm text-blue-600 font-mono font-bold">0 rad</span>
+                    </div>
+                    <input type="range" id="phase" min="0" max="6.28" step="0.1" value="0">
+                    <p class="text-xs text-gray-400 mt-1">调节波的整体初始相位平移。</p>
+                </div>
+            </div>
+
+            <div class="mt-auto bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h4 class="text-sm font-bold text-blue-800 mb-2">教师讲解提示💡</h4>
+                <ul class="text-xs text-blue-700 space-y-2 list-disc pl-4">
+                    <li>结合右上方公式，观察括号内的延迟项 $(t - x/u)$。</li>
+                    <li>改变频率，观察波速 $u$ 的实时变化。</li>
+                    <li>拖动“初相”滑块，验证公式中 $\varphi$ 控制整体平移的作用。</li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <style>
+        /* Custom styles for the toggle switch */
+        input:checked ~ .block { background-color: #3b82f6; }
+        input:checked ~ .dot { transform: translateX(100%); }
+        input:not(:checked) ~ .block { background-color: #e5e7eb; }
+        input:not(:checked) ~ .dot { transform: translateX(0); }
+    </style>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvasContainer');
+        
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const btnText = document.getElementById('btnText');
+        
+        const ampSlider = document.getElementById('amplitude');
+        const waveSlider = document.getElementById('wavelength');
+        const freqSlider = document.getElementById('frequency');
+        const phaseSlider = document.getElementById('phase');
+        
+        const ampValue = document.getElementById('ampValue');
+        const waveValue = document.getElementById('waveValue');
+        const freqValue = document.getElementById('freqValue');
+        const phiValue = document.getElementById('phiValue');
+        
+        const valU = document.getElementById('val_u');
+        const valDt = document.getElementById('val_dt');
+
+        const showLineCheck = document.getElementById('showLine');
+        const showTraceCheck = document.getElementById('showTrace');
+
+        // Physics/Animation Variables
+        let isPlaying = true;
+        let time = 0; // "Global" time driving the animation
+        let lastTimestamp = 0;
+        let animationId;
+
+        // Wave Parameters
+        let amplitude = parseInt(ampSlider.value);
+        let wavelength = parseInt(waveSlider.value);
+        let frequency = parseFloat(freqSlider.value);
+        let phi = parseFloat(phaseSlider.value);
+        const particleSpacing = 15; // Distance between particles
+        const highlightIndex = 15; // Which particle to highlight red
+
+        // Resize Canvas to fit container
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (!isPlaying) drawFrame(0); 
+        });
+
+        // UI Event Listeners
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+                btnText.textContent = '暂停动画';
+                lastTimestamp = performance.now();
+                animate(lastTimestamp);
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                btnText.textContent = '播放动画';
+                cancelAnimationFrame(animationId);
+            }
+        });
+
+        function updateSliderDisplays() {
+            amplitude = parseInt(ampSlider.value);
+            wavelength = parseInt(waveSlider.value);
+            frequency = parseFloat(freqSlider.value);
+            phi = parseFloat(phaseSlider.value);
+            
+            // 假设 100px = 1m 进行显示转换
+            const ampMeters = (amplitude / 100).toFixed(2);
+            const waveMeters = (wavelength / 100).toFixed(2);
+            
+            ampValue.textContent = `${ampMeters} m`;
+            waveValue.textContent = `${waveMeters} m`;
+            freqValue.textContent = `${frequency.toFixed(1)} Hz`;
+            phiValue.textContent = `${phi.toFixed(1)} rad`;
+            
+            // Calculate and update physical relationships
+            const u_px = wavelength * frequency;
+            const u_m = u_px / 100;
+            const targetX = highlightIndex * particleSpacing;
+            const dt = targetX / u_px; // 无论用 px 还是 m 算出来的时间延迟是一致的
+            
+            valU.textContent = u_m.toFixed(2);
+            valDt.textContent = dt.toFixed(2);
+
+            if (!isPlaying) drawFrame(0);
+        }
+
+        ampSlider.addEventListener('input', updateSliderDisplays);
+        waveSlider.addEventListener('input', updateSliderDisplays);
+        freqSlider.addEventListener('input', updateSliderDisplays);
+        phaseSlider.addEventListener('input', updateSliderDisplays);
+        
+        showLineCheck.addEventListener('change', () => { if(!isPlaying) drawFrame(0); });
+        showTraceCheck.addEventListener('change', () => { if(!isPlaying) drawFrame(0); });
+
+        // Math: Calculate Y position for a given X and Time
+        // Equation: y = A * cos[ω(t - x/u) + φ]
+        function getWaveY(physX, t) {
+            const omega = 2 * Math.PI * frequency;
+            const u = wavelength * frequency;
+            return amplitude * Math.cos(omega * (t - physX / u) + phi);
+        }
+
+        // Draw the background grid and Coordinate System for both waves
+        function drawGlobalGridAndAxes(width, height, originX, originY1, originY2) {
+            ctx.strokeStyle = '#f3f4f6'; 
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            const gridSize = 50;
+            for(let x = originX % gridSize; x <= width; x += gridSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+            }
+            for(let y = originY1 % gridSize; y <= height; y += gridSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+            }
+            ctx.stroke();
+
+            // 绘制全局 Y 轴
+            ctx.strokeStyle = '#374151';
+            ctx.fillStyle = '#374151';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(originX, height - 20);
+            ctx.lineTo(originX, 30);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(originX, 30);
+            ctx.lineTo(originX - 6, 42);
+            ctx.lineTo(originX + 6, 42);
+            ctx.fill();
+            ctx.font = 'italic 16px serif';
+            ctx.fillText('y', originX + 15, 35);
+
+            drawXAxis(width, originX, originY1);
+            drawXAxis(width, originX, originY2);
+        }
+
+        function drawXAxis(width, originX, originY) {
+            ctx.strokeStyle = '#374151'; 
+            ctx.fillStyle = '#374151';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(originX - 40, originY);
+            ctx.lineTo(width - 20, originY);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(width - 20, originY);
+            ctx.lineTo(width - 32, originY - 6);
+            ctx.lineTo(width - 32, originY + 6);
+            ctx.fill();
+            ctx.font = 'italic 16px serif';
+            ctx.fillText('x', width - 25, originY + 20);
+        }
+
+        function drawWaveSystem(width, originX, originY, showParticles, title) {
+            // Title
+            ctx.fillStyle = '#4b5563';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(title, originX - 40, originY - amplitude - 35);
+
+            // 1. Draw Waveform Line (Envelope)
+            if (showLineCheck.checked || !showParticles) {
+                ctx.beginPath();
+                ctx.strokeStyle = showParticles ? 'rgba(59, 130, 246, 0.4)' : 'rgba(59, 130, 246, 0.7)'; 
+                ctx.lineWidth = showParticles ? 3 : 4;
+                
+                for (let px = -20; px <= width - originX; px += 2) {
+                    const canvasX = originX + px;
+                    const y = originY - getWaveY(px, time);
+                    if (px === -20) ctx.moveTo(canvasX, y);
+                    else ctx.lineTo(canvasX, y);
+                }
+                ctx.stroke();
+            }
+
+            let highlightedPhysX = highlightIndex * particleSpacing;
+            let highlightedCanvasX = originX + highlightedPhysX;
+            let highlightedCanvasY = originY - getWaveY(highlightedPhysX, time);
+            let originCanvasY = originY - getWaveY(0, time);
+
+            // 2. Distance "x" marker
+            if (showTraceCheck.checked) {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = 2;
+                ctx.moveTo(highlightedCanvasX, originY - amplitude - 20);
+                ctx.lineTo(highlightedCanvasX, originY + amplitude + 20);
+                ctx.stroke();
+                ctx.setLineDash([]); 
+                
+                const dimY = originY + amplitude + 25; 
+                ctx.beginPath();
+                ctx.strokeStyle = '#4b5563';
+                ctx.lineWidth = 1;
+                ctx.moveTo(originX, dimY - 6); ctx.lineTo(originX, dimY + 6);
+                ctx.moveTo(highlightedCanvasX, dimY - 6); ctx.lineTo(highlightedCanvasX, dimY + 6);
+                ctx.moveTo(originX, dimY); ctx.lineTo(highlightedCanvasX, dimY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#1f2937';
+                ctx.font = 'italic 14px serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('距离 x', originX + highlightedPhysX / 2, dimY + 20);
+                ctx.textAlign = 'left'; 
+            }
+
+            // 3. Draw Particles
+            if (showParticles) {
+                const numParticles = Math.floor((width - originX - 50) / particleSpacing);
+                for (let i = 0; i <= numParticles; i++) {
+                    if (i === 0 || i === highlightIndex) continue; 
+                    
+                    const physX = i * particleSpacing;
+                    const canvasX = originX + physX;
+                    const y = originY - getWaveY(physX, time);
+
+                    ctx.beginPath();
+                    ctx.fillStyle = '#3b82f6';
+                    ctx.arc(canvasX, y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // 4. Target Particle (Red) & its Label
+            if (highlightedCanvasX !== 0) {
+                const currentYOffset = getWaveY(highlightedPhysX, time);
+                const nextYOffset = getWaveY(highlightedPhysX, time + 0.01); 
+                const dy = currentYOffset - nextYOffset; 
+                
+                if (Math.abs(dy) > 0.1) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+                    ctx.lineWidth = 2;
+                    const vectorLength = 20 * Math.sign(dy);
+                    ctx.moveTo(highlightedCanvasX, highlightedCanvasY);
+                    ctx.lineTo(highlightedCanvasX, highlightedCanvasY + vectorLength);
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                ctx.fillStyle = '#ef4444'; 
+                ctx.arc(highlightedCanvasX, highlightedCanvasY, 8, 0, Math.PI * 2);
+                ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0; 
+
+                // 绘制 P 点标记
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'italic bold 16px serif';
+                ctx.fillText('P', highlightedCanvasX + 12, highlightedCanvasY + 5);
+            }
+
+            // 5. Origin Particle (Emerald) & its Label
+            if (originCanvasY !== 0) {
+                ctx.beginPath();
+                ctx.fillStyle = '#10b981';
+                ctx.arc(originX, originCanvasY, 8, 0, Math.PI * 2);
+                ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0; 
+
+                // 绘制 O 点标记
+                ctx.fillStyle = '#10b981';
+                ctx.font = 'italic bold 16px serif';
+                ctx.fillText('O', originX - 25, originCanvasY + 5);
+            }
+        }
+
+        // Draw a single frame
+        function drawFrame(deltaTime) {
+            time += deltaTime / 1000; 
+
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const originX = 100; 
+            
+            const originY1 = height * 0.28; 
+            const originY2 = height * 0.72; 
+
+            ctx.clearRect(0, 0, width, height);
+
+            drawGlobalGridAndAxes(width, height, originX, originY1, originY2);
+            drawWaveSystem(width, originX, originY1, true, "1. 微观视角：可见介质中所有质点的振动");
+            drawWaveSystem(width, originX, originY2, false, "2. 宏观视角：波形的整体传播");
+        }
+
+        // Main Animation Loop
+        function animate(timestamp) {
+            if (!isPlaying) return;
+            
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            
+            if (deltaTime < 100) { 
+                drawFrame(deltaTime);
+            } else {
+                drawFrame(16); 
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Initialization
+        resizeCanvas();
+        updateSliderDisplays();
+        lastTimestamp = performance.now();
+        animate(lastTimestamp);
+
+        document.fonts.ready.then(() => {
+            if (!isPlaying) drawFrame(0);
+        });
+
+    </script>
+</body>
+</html>
