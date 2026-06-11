@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>长治学院 PhyVerse - 物理仿真资源库</title>
+    <style>
+        :root {
+            --ink: #1f2937;
+            --muted: #64748b;
+            --surface: rgba(255, 255, 255, 0.88);
+            --surface-strong: #ffffff;
+            --line: rgba(37, 99, 235, 0.16);
+            --blue: #2563eb;
+            --cyan: #0891b2;
+            --green: #10b981;
+            --shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+            --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 44px 22px 56px;
+            color: var(--ink);
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.65;
+            background:
+                radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.18), transparent 28%),
+                radial-gradient(circle at 84% 14%, rgba(16, 185, 129, 0.14), transparent 24%),
+                linear-gradient(135deg, #eef5ff 0%, #f8fafc 46%, #eefdf7 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: linear-gradient(to bottom, #000 0%, transparent 78%);
+        }
+
+        header {
+            position: relative;
+            max-width: 1040px;
+            margin: 0 auto 28px;
+            padding: 38px 28px 34px;
+            overflow: hidden;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            border-radius: 8px;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.72)),
+                linear-gradient(120deg, rgba(37, 99, 235, 0.12), rgba(8, 145, 178, 0.08));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            left: 28px;
+            right: 28px;
+            bottom: 0;
+            height: 4px;
+            border-radius: 999px 999px 0 0;
+            background: linear-gradient(90deg, var(--blue), var(--cyan), var(--green));
+        }
+
+        h1 {
+            margin: 0;
+            color: #0f172a;
+            font-size: clamp(2rem, 4vw, 3.6rem);
+            line-height: 1.16;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        header p {
+            max-width: 760px;
+            margin: 14px auto 0;
+            color: var(--muted);
+            font-size: clamp(1rem, 2vw, 1.18rem);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 22px;
+            max-width: 1040px;
+            margin: 0 auto;
+        }
+
+        .card {
+            position: relative;
+            min-height: 100%;
+            padding: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(16px);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 5px;
+            background: linear-gradient(90deg, var(--blue), var(--cyan));
+        }
+
+        .card:nth-child(2)::before {
+            background: linear-gradient(90deg, #f97316, #ef4444);
+        }
+
+        .card:nth-child(3)::before {
+            background: linear-gradient(90deg, #7c3aed, #06b6d4);
+        }
+
+        .card:nth-child(4)::before {
+            background: linear-gradient(90deg, #14b8a6, #84cc16);
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(37, 99, 235, 0.22);
+            box-shadow: 0 26px 58px rgba(15, 23, 42, 0.14);
+        }
+
+        h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 16px;
+            padding-bottom: 14px;
+            color: #164e63;
+            font-size: 1.18rem;
+            line-height: 1.35;
+            border-bottom: 1px solid var(--line);
+        }
+
+        h2::before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            flex: 0 0 12px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 0 6px rgba(8, 145, 178, 0.1);
+        }
+
+        ul {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        li {
+            margin: 0;
+        }
+
+        a {
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            padding: 10px 12px;
+            color: #334155;
+            text-decoration: none;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: rgba(248, 250, 252, 0.64);
+            transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        a::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            margin-right: 10px;
+            flex: 0 0 6px;
+            border-radius: 50%;
+            background: var(--cyan);
+            opacity: 0.72;
+        }
+
+        a:hover,
+        a:focus-visible {
+            color: #0f172a;
+            background: var(--surface-strong);
+            border-color: rgba(37, 99, 235, 0.18);
+            transform: translateX(4px);
+            outline: none;
+        }
+
+        a:focus-visible {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 24px 14px 36px;
+            }
+
+            header {
+                padding: 30px 20px 28px;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            a {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>长治学院 PhyVerse 物理仿真资源库</h1>
+    <p>构建交互式物理实验的虚拟空间</p>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2>力学 (Mechanics)</h2>
+        <ul>
+            <li><a href="mechanics力学/3D刚体定轴转动演示.html">3D刚体定轴转动演示</a></li>
+            <li><a href="mechanics力学/三体运动的模拟.html">三体运动的模拟</a></li>
+            <li><a href="mechanics力学/切向单位矢量的变化.html">切向单位矢量的变化</a></li>
+            <li><a href="mechanics力学/开普勒第二定律.html">开普勒第二定律</a></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>热学 (Thermodynamics)</h2>
+        <ul>
+            <li><a href="thermodynamics热学/分子平均自由程动画模拟.html">分子平均自由程动画模拟</a></li>
+            <li><a href="thermodynamics热学/功_过程量.html">功（过程量）</a></li>
+            <li><a href="thermodynamics热学/四冲程气缸.html">四冲程气缸</a></li>
+            <li><a href="thermodynamics热学/常见分子类型的自由度演示_完美版.html">常见分子类型的自由度演示</a></li>
+            <li><a href="thermodynamics热学/气体分子热运动模拟器.html">气体分子热运动模拟器</a></li>
+            <li><a href="thermodynamics热学/热力学四大过程演示仪.html">热力学四大过程演示仪</a></li>
+            <li><a href="thermodynamics热学/麦克斯韦速率分布可视化.html">麦克斯韦速率分布可视化</a></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>振动与波 (Waves)</h2>
+        <ul>
+            <li><a href="waves振动和波/同方向同频率简谐振动的合成.html">同方向同频率简谐振动的合成</a></li>
+            <li><a href="waves振动和波/平面波与球面波.html">平面波与球面波</a></li>
+            <li><a href="waves振动和波/横波与纵波 .html">横波与纵波</a></li>
+            <li><a href="waves振动和波/波的传播过程_横波演示.html">波的传播过程（横波演示）</a></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>近代物理 (Modern Physics)</h2>
+        <ul>
+            <li><a href="modern_physics近代物理/弗兰克赫兹实验原理动画.html">弗兰克赫兹实验原理动画</a></li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>
